@@ -1,0 +1,67 @@
+conda env remove -n mujoco_graspnet
+conda create -n mujoco_graspnet python=3.9
+conda activate mujoco_graspnet
+
+------------------下载manipulator_grasp项目--------------------
+git clone https://gitee.com/chaomingsanhua/manipulator_grasp.git
+cd manipulator_grasp
+
+--------------------------配置环境--------------------------------
+1、基于graspnet-baseline项目开发，
+（1）下载该项目并基于该项目配置环境
+git clone https://github.com/graspnet/graspnet-baseline.git
+cd graspnet-baseline
+
+（2）修改requirements.txt
+# 去掉torch，修改numpy==1.23.4
+pip install -r requirements.txt
+
+（3）安装torch
+# 安装的CUDA版本为11.3，不断试错选了torch1.12.1版本（项目要求torch1.6）
+# https://pytorch.org/get-started/previous-versions/
+pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
+
+2、Compile and install pointnet2 operators (code adapted from votenet).
+cd pointnet2
+python setup.py install
+cd ../
+
+3、Compile and install knn operator (code adapted from pytorch_knn_cuda)
+cd knn
+python setup.py install
+cd ../
+
+4、Install graspnetAPI for evaluation.
+git clone https://github.com/graspnet/graspnetAPI.git
+
+# 修改graspnetAPI的setup.py，将sklearn替换为 scikit-learn
+cd graspnetAPI
+pip install .
+cd ../
+
+5、提前处理异常
+（1)后续运行如果出现报错
+Traceback (most recent call last): File "/home/song/hjx/manipulator_grasp/main.py", line 19, in <module> from graspnet_dataset import GraspNetDataset File "/home/song/hjx/manipulator_grasp/graspnet-baseline/dataset/graspnet_dataset.py", line 12
+# 这里提前修改graspnet-baseline/dataset/graspnet_dataset.py
+# 原代码（旧版PyTorch）
+from torch._six import container_abcs
+# 修改为（适配PyTorch 2.x）
+import collections.abc as container_abcs
+
+(2)下载graspnet-baseline的权重
+将checkpoint-rs.tar放到manipulator_grasp项目的logs/log_rs（需要自己新建出来）
+
+-------------在manipulator_grasp项目执行程序----------------
+
+额外安装的包
+pip install spatialmath-python==1.1.14
+pip install roboticstoolbox-python==1.1.1
+pip install modern-robotics==1.1.1
+pip install mujoco==3.3.1
+
+# 修改任务，执行即可
+./mainpulator_grasp/assets/scenes/scenes.xml。里面有任务：圆柱体、立方体、T形块
+
+python main.py
+
+
